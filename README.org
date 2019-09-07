@@ -1,0 +1,2 @@
+* Chelengk
+  A work-in-progress project for a symbolic [[https://en.wikipedia.org/wiki/Turkish_makam][makam music]] engine.
