@@ -10,14 +10,13 @@
 ;;; A koma is an interval between perdeler. The interval between two
 ;;; perde are divided into nine komalar (one tanîni).
 (def komalar
-  (make-bidimap
-   {:fazla 1
-    :eksik-bakiye 3
-    :bakiye 4
-    :küçük-müneccep 5
-    :büyük-müneccep 8
-    :tanîni 9
-    :artık-ikili 12}))
+  {:fazla 1
+   :eksik-bakiye 3
+   :bakiye 4
+   :küçük-müneccep 5
+   :büyük-müneccep 8
+   :tanîni 9
+   :artık-ikili 12})
 
 (def perdeler
   (make-bidimap
