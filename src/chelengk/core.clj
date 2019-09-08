@@ -1,6 +1,5 @@
 (ns chelengk.core
-  (:require [clojure.pprint :refer [pprint]]
-            [chelengk.scales :refer [get-makam]])
+  (:require [chelengk.scales :refer [get-makam]])
   (:gen-class))
 
 (defn -main

@@ -1,4 +1,4 @@
-(defproject chelengk "0.1.0"
+(defproject chelengk "0.1.1"
   :description "Makam experiments"
   :url "https://github.com/erkin/chelengk"
   :license {:name "Mozilla Public License 2.0"}

@@ -5,10 +5,11 @@
 *** Example use
 #+BEGIN_SRC clojure
   => (get-makam :rast)
-  (:rast :dügâh :segâh :çârgâh :nevâ :hüseynî :eviç :gerdâniye)
+  (:rast :dügah :segah :çargah :neva :hüseyni :eviç :gerdaniye)
 #+END_SRC
 
 ** Roadmap
-   + Implement falling and falling-rising makamlar
-   + Add the most commonly used makamlar, as well as transposed and compound ones
+   + Falling makamlar
+   + Compound makamlar
+   + Makam developments
    + MIDI and MusicXML export
