@@ -1,6 +1,7 @@
 html
 {
 	font-family: serif;
+	font-size: 18px;
 	height: 100%;
 }
 
@@ -99,7 +100,7 @@ li a
 	}
 	a
 	{
-		color: #a7d198;
+		color: #6b8661;
 	}
 	.active
 	{
