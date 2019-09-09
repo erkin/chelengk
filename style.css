@@ -1,0 +1,62 @@
+html
+{
+	font-family: serif;
+}
+
+body
+{
+}
+
+hr
+{
+	width: 480px;
+	overflow: visible; 
+	border: none;
+	border-top: medium double #588;
+	text-align: center;
+}
+
+hr:after
+{
+	content: '\01D12B';
+	display: inline-block;
+	position: relative;
+	top: -0.7em;
+	font-size: 1.5em;
+}
+
+footer
+{
+	position: absolute;
+	bottom: 0;
+}
+
+@media screen
+{
+	html
+	{
+		background-color: #433;
+
+		height: 100%;
+	}
+	body
+	{
+		color: #eff;
+
+		margin-left: 10%;
+		margin-right: 10%;
+
+		min-height: 80%;
+		vertical-align: middle;
+	}
+	a
+	{
+		color: #59A;
+	}
+}
+
+/* Local Variables:
+	mode: css
+	indent-tabs-mode: t 
+	tab-width: 4
+/* End: */
