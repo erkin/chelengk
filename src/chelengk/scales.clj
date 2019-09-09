@@ -2,17 +2,21 @@
   (:require [chelengk.notes :refer [add-koma]]))
 
 (def dörtlüler
-  {:çargah   '(:tanini :tanini :bakiyye)
-   :buselik  '(:tanini :bakiyye :tanini)
-   :kürdi    '(:bakiyye :tanini :tanini)
-   :rast     '(:tanini :büyük-müneccep :küçük-müneccep)
-   :hicaz    '(:küçük-müneccep :artık-ikili :küçük-müneccep)
-   ;; To accomodate for artık ikili with koma value of 13.
-   :hicaz-13 '(:küçük-müneccep :artık-ikili-13 :bakiyye)
+  {:çargah    '(:tanini :tanini :bakiyye)
+   :buselik   '(:tanini :bakiyye :tanini)
+   :kürdi     '(:bakiyye :tanini :tanini)
+   :rast      '(:tanini :büyük-müneccep :küçük-müneccep)
+   ;; Hicaz is an inconsistent dörtlü due to artık ikili's varying length.
+   ;; When artık ikili assumes the length of 13 koma instead of 12,
+   ;; The excess koma is taken from either the preceding or the following
+   ;; küçük müneccep.
+   :hicaz     '(:küçük-müneccep :artık-ikili :küçük-müneccep)
+   :hicaz-13  '(:küçük-müneccep :artık-ikili-13 :bakiyye)
+   :hicaz-13* '(:bakiyye :artık-ikili-13 :küçük-müneccep)
    ;; Uşşak is used for tetrachords, whereas
    ;; hüseyni is used for pentachords.
-   :uşşak    '(:büyük-müneccep :küçük-müneccep :tanini)
-   :hüseyni  '(:büyük-müneccep :küçük-müneccep :tanini)})
+   :uşşak     '(:büyük-müneccep :küçük-müneccep :tanini)
+   :hüseyni   '(:büyük-müneccep :küçük-müneccep :tanini)})
 
 ;;; A makam is made up of two dörtlüler starting from a durak.
 (def makamlar
@@ -52,7 +56,7 @@
    :zirgüleli-suzinak '(:rast           :hicaz 5    :hicaz 4)
    :hicazkar          '(:rast           :hicaz 5    :hicaz 4)
    :evcara            '(:ırak           :hicaz-13 5 :hicaz-13 4)
-   :suzidil           '(:hüseyniaşiran  :hicaz 5    :hicaz-13 4)
+   :suzidil           '(:hüseyniaşiran  :hicaz 5    :hicaz-13* 4)
    :şeddiaraban       '(:yegah          :hicaz 5    :hicaz 4)})
 
 (defn make-dörtlü
@@ -80,8 +84,9 @@
   [durak
    former-chord former-length
    latter-chord latter-length]
-  (let [former (make-dörtlü durak former-chord former-length)]
-    (concat former (rest (make-dörtlü (last former) latter-chord latter-length)))))
+  (let [former (make-dörtlü durak former-chord former-length)
+        latter (make-dörtlü (last former) latter-chord latter-length)]
+    (concat former (rest latter))))
 
 (defn get-makam [makam]
   (apply make-makam (makamlar makam)))
