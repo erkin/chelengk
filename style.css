@@ -14,10 +14,10 @@ body
 
 hr
 {
-	width: 480px;
+	width: 65%;
 	overflow: visible; 
 	border: none;
-	border-top: medium double #588;
+	border-top: medium double #90c17d;
 	text-align: center;
 }
 
@@ -42,13 +42,12 @@ ul
 	margin: 0;
 	padding: 0;
 	overflow: hidden;
-	background-color: #333;
+	background-color: #687a61;
 }
 
 li
 {
 	float: left;
-	border-right:1px solid #bbb;
 }
 
 li:last-child
@@ -59,7 +58,7 @@ li:last-child
 li a
 {
 	display: block;
-	color: #fff;
+	color: #dff2d8;
 	text-align: center;
 	padding: 14px 16px;
 	text-decoration: none;
@@ -97,19 +96,19 @@ li a
 {
 	html
 	{
-		background-color: #433;
+		background-color: #dff2d8;
 	}
 	body
 	{
-		color: #eff;
+		color: #687a61;
 	}
 	a
 	{
-		color: #59A;
+		color: #a7d198;
 	}
 	.active
 	{
-		background-color: #4B5;
+		background-color: #90c17d;
 	}
 }
 
