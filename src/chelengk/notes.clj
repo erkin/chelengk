@@ -1,11 +1,5 @@
 (ns chelengk.notes
-  (:require [clojure.set :refer [map-invert]]))
-
-(defn- make-bidimap
-  "Merge `map` with its inverse to get a crude approximation of
-  a bidirectional map."
-  [map]
-  (merge map (map-invert map)))
+  (:require [chelengk.const :refer [make-bidimap strict-get]]))
 
 ;;; A koma is an interval between perdeler. The interval between two
 ;;; perde are divided into nine komalar (one tanini).
@@ -75,4 +69,5 @@
   "Add the value of `koma` to `perde`'s value, return the name of the
   resulting perde."
   [perde koma]
-  (perdeler (+ (perdeler perde) (komalar koma))))
+  (perdeler (+ (strict-get perdeler perde)
+               (strict-get komalar koma))))

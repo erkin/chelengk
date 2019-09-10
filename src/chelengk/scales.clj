@@ -1,5 +1,7 @@
 (ns chelengk.scales
-  (:require [chelengk.notes :refer [add-koma]]))
+  (:require [chelengk
+             [const :refer [strict-get]]
+             [notes :refer [add-koma]]]))
 
 (def dörtlüler
   {:çargah    '(:tanini :tanini :bakiyye)
@@ -65,7 +67,7 @@
   tetrachord. Beşliler (pentachords) are obtained by appending a tanini
   (whole note) to a tetrachord."
   [durak name length]
-  (let [intervals (dörtlüler name)]
+  (let [intervals (strict-get dörtlüler name)]
     (reverse
      (reduce
       (fn [accumulator current-item]
@@ -90,4 +92,4 @@
     (concat former (rest latter))))
 
 (defn get-makam [makam]
-  (apply make-makam (makamlar makam)))
+  (apply make-makam (strict-get makamlar makam)))
