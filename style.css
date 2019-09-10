@@ -46,12 +46,12 @@ ul
 	background-color: #687a61;
 }
 
-li
+ul > li
 {
 	float: left;
 }
 
-li a
+ul > li a
 {
 	display: inline-block;
 	color: #dff2d8;
