@@ -36,7 +36,7 @@
    :uzzal             '(:dügah  :hicaz 5 :uşşak 4)
    :zirgüleli-hicaz   '(:dügah  :hicaz 5 :hicaz 4)
    ;; Synonyms for uşşak, hüseyni, neva and buselik respectively.
-   :bayati            '(:dügah  :uşşak 4   :buselik 5)
+   :beyati            '(:dügah  :uşşak 4   :buselik 5)
    :muhayyer          '(:dügah  :hüseyni 5 :uşşak 4)
    :tahir             '(:dügah  :uşşak 4   :rast 5)
    :şehnaz-buselik    '(:dügah  :buselik 5 :kürdi 4)
@@ -85,7 +85,8 @@
    former-chord former-length
    latter-chord latter-length]
   (let [former (make-dörtlü durak former-chord former-length)
-        latter (make-dörtlü (last former) latter-chord latter-length)]
+        güçlü (last former)
+        latter (make-dörtlü güçlü latter-chord latter-length)]
     (concat former (rest latter))))
 
 (defn get-makam [makam]
