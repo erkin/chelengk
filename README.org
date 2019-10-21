@@ -1,11 +1,10 @@
 * Chelengk
   A work-in-progress project for a symbolic [[https://en.wikipedia.org/wiki/Turkish_makam][makam music]] engine.
-  It is based on Arel-Ezgi-Uzdilek system of notation.
 
 *** Example use
-#+BEGIN_SRC clojure
-  => (get-makam :rast)
-  (:rast :dügah :segah :çargah :neva :hüseyni :eviç :gerdaniye)
+#+BEGIN_SRC racket
+  > (get-makam 'rast)
+  (rast dügah segah çargah neva hüseyni eviç gerdaniye)
 #+END_SRC
 
 ** Roadmap
