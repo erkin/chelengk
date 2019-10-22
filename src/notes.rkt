@@ -74,7 +74,7 @@
   (make-immutable-hasheq perde-alist))
 
 (define inverse-perdeler
-  (make-immutable-hasheq (invert-alist perde-alist)))
+  (make-immutable-hasheqv (invert-alist perde-alist)))
 
 (define (add-koma perde koma)
   (hash-ref inverse-perdeler

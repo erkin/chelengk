@@ -1,5 +1,7 @@
 #lang racket/base
 
+(provide (all-defined-out))
+
 (define (invert-alist alist)
   (define (invert-alist-iter alist result)
     (if (null? alist)
