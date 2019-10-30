@@ -1,5 +1,6 @@
 * Chelengk
-  A work-in-progress project for a symbolic [[https://en.wikipedia.org/wiki/Turkish_makam][makam music]] engine.
+  A work-in-progress project for a symbolic [[https://en.wikipedia.org/wiki/Turkish_makam][makam music]] engine based on
+  Arel-Ezgi-Uzdilek system.
 
 *** Example use
 #+BEGIN_SRC racket
@@ -8,6 +9,6 @@
 #+END_SRC
 
 ** Roadmap
+   + Parsing [[https://github.com/MTG/SymbTr][SymbTr]] files
    + Compound makamlar
    + Makam developments
-   + MIDI and MusicXML export

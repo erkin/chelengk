@@ -2,6 +2,8 @@
 
 (provide (all-defined-out))
 
+(define song-directory "SymbTr/txt")
+
 (define (invert-alist alist)
   (define (invert-alist-iter alist result)
     (if (null? alist)

@@ -1,9 +1,10 @@
 #lang racket/base
 
+(provide get-makam)
+
 (require "notes.rkt")
 (require racket/list)
 
-(provide get-makam)
 
 ;;; A dizi is a list of consecutive intervals.
 ;;; '(name interval interval interval)

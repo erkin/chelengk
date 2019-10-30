@@ -1,7 +1,9 @@
 #lang racket/base
 
-(require (only-in "scales.rkt" get-makam))
+(require "notes.rkt"
+         "scales.rkt"
+         "songs.rkt")
+
 
 (module+ main
-  ;; Rast makam example
-  (displayln (get-makam 'rast)))
+(define songs (read-all-songs)))

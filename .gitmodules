@@ -1,0 +1,3 @@
+[submodule "SymbTr"]
+	path = SymbTr
+	url = https://github.com/MTG/SymbTr
