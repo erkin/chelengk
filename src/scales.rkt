@@ -5,6 +5,8 @@
 (require "notes.rkt")
 (require racket/list)
 
+;;;; Scales and chords
+
 
 ;;; A dizi is a list of consecutive intervals.
 ;;; '(name interval interval interval)
@@ -16,13 +18,13 @@
      (rast tanini büyük-müneccep küçük-müneccep)
      ;; Hicaz is an inconsistent dörtlü due to artık ikilis varying length.
      ;; When artık ikili assumes the length of 13 koma instead of 12,
-     ;; The excess koma is taken from either the preceding or the following
-     ;; küçük müneccep.
+     ;;  the excess koma is taken from either the preceding or the
+     ;;  following küçük müneccep.
      (hicaz küçük-müneccep artık-ikili küçük-müneccep)
      (hicaz-13 küçük-müneccep artık-ikili-13 bakiyye)
      (hicaz-13* bakiyye artık-ikili-13 küçük-müneccep)
      ;; Uşşak is used for tetrachords, whereas
-     ;; hüseyni is used for pentachords.
+     ;;  hüseyni is used for pentachords.
      (uşşak büyük-müneccep küçük-müneccep tanini)
      (hüseyni büyük-müneccep küçük-müneccep tanini))))
 

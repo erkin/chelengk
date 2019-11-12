@@ -1,15 +1,8 @@
 #lang racket/base
 
-(require racket/cmdline
-         racket/function
-         racket/pretty)
-(require threading)
-
 (require "const.rkt"
-         "notes.rkt"
-         "scales.rkt"
-         "songs.rkt")
-
+         "playback.rkt")
+(require racket/cmdline)
 
 (module+ main
   (command-line
@@ -20,10 +13,7 @@
     (displayln version-message)
     (exit)))
 
-  ;; Example use
-  (~>> (read-all-songs)
-       caddr
-       song-notes
-       (map note-holdrian)
-       (filter (curry < 200))
-       (for-each (compose pretty-print (curry hash-ref inverse-perdeler)))))
+  ;; Exmaple use
+  (play-makam 'uşşak)
+  (sleep 1)
+  (play-song "ussak--turku--sofyan--uzun_ince--asik_veysel.txt"))

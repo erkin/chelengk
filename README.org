@@ -1,14 +1,8 @@
 * Chelengk
   A work-in-progress project for a symbolic [[https://en.wikipedia.org/wiki/Turkish_makam][makam music]] engine based on
-  Arel-Ezgi-Uzdilek system.
-
-*** Example use
-#+BEGIN_SRC racket
-  > (get-makam 'rast)
-  (rast dügah segah çargah neva hüseyni eviç gerdaniye)
-#+END_SRC
+  Arel-Ezgi-Uzdilek system. Uses the [[https://github.com/MTG/SymbTr][SymbTr]] corpus.
 
 ** Roadmap
-   + Parsing [[https://github.com/MTG/SymbTr][SymbTr]] files
    + Compound makamlar
    + Makam developments
+   + Procedural generation of music

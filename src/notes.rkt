@@ -1,12 +1,31 @@
 #lang racket/base
 
-(provide add-koma inverse-perdeler)
+(provide add-koma comma->freq perde->freq inverse-perdeler)
 
 (require "const.rkt")
 
+;;;; Notes, commas and frequencies
 
-;;; A koma is an interval between perdeler. The interval between two
-;;; perde are divided into nine komalar (one tanini).
+
+#| I hope I understand this stuff correctly...
+
+perde (pl perdeler): A specific note, especially one with a name.
+koma (pl komalar): An interval that is defined as a Holdrian comma in Arel-Ezgi
+      system. Each whole note is divided into nine komalar. Specific intervals
+      are defined through komalar and have individual names.
+
+Holdrian comma: The smallest interval of 53TET. Exactly 22,6415 cents.
+53TET: 53 tone equal temperament. A system of tuning that breaks up an octave
+       into 53 intervals. An octave is still 1200 cents wide.
+
+|#
+
+
+(define holdrian 22.6415)
+
+;;; Frequency of C0 of 53TET in hertz.
+(define root 16.35)
+
 (define koma-alist
   '((fazla . 1)
     (eksik-bakiyye . 3)
@@ -14,12 +33,16 @@
     (küçük-müneccep . 5)
     (büyük-müneccep . 8)
     (tanini . 9)
+    ;; Artık ikili can be 13 to fill a gap worth a fazla.
     (artık-ikili . 12)
     (artık-ikili-13 . 13)))
 
-;;; Each perde corresponds to a Holdrian comma distance from C3 of 53TET.
+;;; Each perde corresponds to a Holdrian comma distance from C0.
+;;; ie C0 is 1 and C5 is 1 + 5 * 53 = 266, which is kaba çargah
 (define perde-alist
-  '((kaba-rast . 243)
+  '((pause . -1)
+
+    (kaba-rast . 243)
 
     (kaba-nim-zirgüle . 247)
     (kaba-zirgüle . 248)
@@ -135,14 +158,29 @@
 
     (tiz-gerdaniye . 402)))
 
+;;; Symbol to number
 (define komalar
   (make-immutable-hasheq koma-alist))
 
+;;; Symbol to number
 (define perdeler
   (make-immutable-hasheq perde-alist))
 
+;;; Number to symbol
 (define inverse-perdeler
   (make-immutable-hasheqv (invert-alist perde-alist)))
+
+
+;;; Convert Holdrian comma distance from C0 to hertz
+(define (comma->freq comma)
+  ;; A comma value of -1 indicates a pause.
+  (if (= comma -1)
+      0.0
+      (* root (expt 2 (sub1 (/ (* holdrian comma) 1200))))))
+
+;;; Convert perde (symbol) to frequency
+(define (perde->freq perde)
+  (comma->freq (hash-ref perdeler perde)))
 
 (define (add-koma perde koma)
   (hash-ref inverse-perdeler
