@@ -2,6 +2,9 @@
 
 (provide (all-defined-out))
 
+;;;; Project-specific constants and general purpose procedures
+
+
 (define project-name "Chelengk")
 (define project-version "v0.1.0")
 
@@ -14,6 +17,18 @@
         (invert-alist-iter (cdr alist)
                            (cons (cons (cdar alist) (caar alist)) result))))
   (invert-alist-iter alist '()))
+
+(define-syntax ~>>
+  (syntax-rules ()
+    ((_ arg) arg)
+    ((_ arg (body ...) rest ...)
+     (~>> (body ... arg) rest ...))))
+
+(define-syntax ~>
+  (syntax-rules ()
+    ((_ arg) arg)
+    ((_ arg (body body* ...) rest ...)
+     (~> (body arg body* ...) rest ...))))
 
 (define version-message
   (format #<<version
