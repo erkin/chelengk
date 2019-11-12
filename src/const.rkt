@@ -6,7 +6,7 @@
 
 
 (define project-name "Chelengk")
-(define project-version "v0.1.0")
+(define project-version "v0.2.0")
 
 (define song-directory "SymbTr/txt")
 
