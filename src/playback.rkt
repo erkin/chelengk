@@ -27,7 +27,7 @@
 (define (play-makam makam)
   (~>> (get-makam makam)
        (map (λ (perde)
-              (make-tone (perde->freq perde) 1 (default-sample-rate))))
+              (make-tone (perde->pitch perde) 1 (default-sample-rate))))
        (rs-append*)
        (play-and-wait)))
 
@@ -45,7 +45,7 @@
    ;;  missed.
    (for/list ((fst (in-list notes))
               (snd (in-list (cdr notes))))
-     (let ((pitch (comma->freq (note-holdrian snd)))
+     (let ((pitch (comma->pitch (note-holdrian snd)))
            ;; Multiplied by 0.05 to fit the 0,0~1,0 interval.
            ;; Also to preserve ear health.
            (volume (* 0.05 (note-velocity snd)))

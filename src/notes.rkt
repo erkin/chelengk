@@ -1,6 +1,6 @@
 #lang racket/base
 
-(provide add-koma comma->freq perde->freq inverse-perdeler)
+(provide add-koma comma->pitch perde->pitch inverse-perdeler)
 
 (require "const.rkt")
 
@@ -172,15 +172,15 @@ Holdrian comma: The smallest interval of 53TET. Exactly 22,6415 cents.
 
 
 ;;; Convert Holdrian comma distance from C0 to hertz
-(define (comma->freq comma)
+(define (comma->pitch comma)
   ;; A comma value of -1 indicates a pause.
   (if (= comma -1)
       0.0
       (* root (expt 2 (sub1 (/ (* holdrian comma) 1200))))))
 
 ;;; Convert perde (symbol) to frequency
-(define (perde->freq perde)
-  (comma->freq (hash-ref perdeler perde)))
+(define (perde->pitch perde)
+  (comma->pitch (hash-ref perdeler perde)))
 
 (define (add-koma perde koma)
   (hash-ref inverse-perdeler
