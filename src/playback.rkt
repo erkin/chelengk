@@ -49,17 +49,21 @@
            ;; Multiplied by 0.05 to fit the 0,0~1,0 interval.
            ;; Also to preserve ear health.
            (volume (* 0.05 (note-velocity snd)))
-           (duration (round (* (default-sample-rate)
-                               ;; 3.5 coefficient is hardcoded until
-                               ;;  a tempo system is implemented.
-                               3.5
-                               ;; The difference between the offsets
-                               ;;  is the length of the second.
-                               (- (note-offset snd) (note-offset fst))))))
-       ;; A value of 0.0 indicates a pause.
-       (if (zero? pitch)
-           (silence duration)
-           (make-tone pitch volume duration))))))
+           (duration (ceiling (* (default-sample-rate)
+                                 ;; 3.5 coefficient is hardcoded until
+                                 ;;  a tempo system is implemented.
+                                 3.5
+                                 ;; The difference between the offsets
+                                 ;;  is the length of the second.
+                                 (- (note-offset snd) (note-offset fst))))))
+       ;; Zero duration is a transcription mistake that we're silently
+       ;;  ignoring with a one-frame pause.
+       (if (zero? duration)
+           (silence 1)
+           ;; A value of 0.0 indicates a pause.
+           (if (zero? pitch)
+               (silence duration)
+               (make-tone pitch volume duration)))))))
 
 (define (play-song path)
   (play-and-wait (make-song path)))
