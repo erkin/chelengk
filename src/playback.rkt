@@ -2,6 +2,8 @@
 
 (provide play-song
          play-makam
+         play-perde
+         improvise-on
          record-song)
 
 (require "const.rkt"
@@ -24,12 +26,25 @@
   (sleep (sound-length sound))
   (stop))
 
-(define (play-makam makam)
-  (~>> (get-makam makam)
-       (map (λ (perde)
-              (make-tone (perde->pitch perde) 1 (default-sample-rate))))
+(define (play-perde perde)
+  (make-tone (perde->pitch perde) 1 (default-sample-rate)))
+
+(define (play-list lst)
+  (~>> lst
+       (map play-perde)
        (rs-append*)
        (play-and-wait)))
+
+(define (play-makam makam)
+  (play-list (get-makam makam)))
+
+;;; Generate a list of random notes from a given makam, then play it.
+(define (improvise-on makam len)
+  (play-list
+   (let loop ((improv '()))
+     (if (< (length improv) len)
+         (loop (cons (generate-perde makam) improv))
+         improv))))
 
 (define (make-song path)
   (define notes
@@ -68,5 +83,10 @@
 (define (play-song path)
   (play-and-wait (make-song path)))
 
-(define (record-song path out-path)
-  (rs-write (make-song path) out-path))
+(define (record-song path)
+  (let ((song (make-song path)))
+    (rs-write
+     song
+     (build-path
+      wav-output-directory
+      (path-replace-extension (song-filename song) #".wav")))))

@@ -2,13 +2,17 @@
 
 (provide (all-defined-out))
 
+(require racket/list)
+
 ;;;; Project-specific constants and general purpose procedures
 
 
 (define project-name "Chelengk")
 (define project-version "v0.2.0")
 
-(define song-directory "SymbTr/txt")
+(define song-directory (string->path "SymbTr/txt"))
+(define csv-output-directory (string->path "output/csv"))
+(define wav-output-directory (string->path "output/wav"))
 
 (define (invert-alist alist)
   (define (invert-alist-iter alist result)

@@ -14,7 +14,7 @@
 ;;;; SymbTr parser
 
 
-(struct song (notes makam form usul title composer) #:transparent)
+(struct song (filename notes makam form usul title composer) #:transparent)
 (struct note (code holdrian arel velocity offset) #:transparent)
 
 (define (read-notes path)
@@ -26,13 +26,10 @@
    (cdr (file->lines path))))
 
 (define (read-song path)
+  (define filename (path-replace-extension (file-name-from-path path) #""))
   (match-let (((list makam form usul title composer)
-               (~> path
-                   (file-name-from-path)
-                   (path-replace-extension #"")
-                   (path->string)
-                   (string-split "--" #:trim? #f))))
-    (song (read-notes path) makam form usul title composer)))
+               (string-split (path->string filename) "--" #:trim? #f)))
+    (song filename (read-notes path) makam form usul title composer)))
 
 (define (read-all-songs)
   (parameterize ((current-directory song-directory))
