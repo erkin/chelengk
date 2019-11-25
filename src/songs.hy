@@ -6,41 +6,36 @@
 ;;; SymbTr parser
 
 
+(setv useful-notes
+      [ ;; Ordinary note
+       "9" "10"
+       ;; Grace note
+       "8" "11"
+       ;; Glissando
+       "4"
+       ;; Tremolo
+       "7" "16"
+       ;; Trill
+       "1" "12" "32"
+       ;; Mordent
+       "23" "24" "43" "44"
+       ;; Embellishment
+       "1" "28"])
+
 (setv make-song (namedtuple 'song '(filename notes makam form usul title composer)))
 (setv make-note (namedtuple 'note '(comma velocity duration)))
 
-;;; I'm ashamed of myself for this rushed mess...
-;;; TODO: Rewrite this
 (defn read-notes [path]
   (with [tsv (open path)]
-    ;; Skip the first line which contains the column info
-    (setv reader (doto (csv.reader tsv :delimiter "\t") next)
-          ;; Read the first line separately
-          temp-line (next reader)
-          ;; Save info of the first line
-          prev-comma (get temp-line 4)
-          prev-velocity (get temp-line 10)
-          prev-offset 0.0
-          notes [])
-    ;; Start reading the remaining n-2 lines
-    (for [line reader]
-      ;; Only get playable notes
-      ;; TODO: Add trills etc
-      :if (in (get line 1) ["7" "8" "9"])
-      ;; TODO: Read tempo
-      (setv offset (get line 12))
-      ;; Construct the previous note using the current offset.
-      (.append notes (make-note (int prev-comma) (int prev-velocity)
-                                ;; Subtract offsets to find the length
-                                (- (float offset) (float prev-offset))))
-      ;; Stash the current note's info for the next iteration so that we
-      ;;  can build it using the next note's offset info.
-      (setv prev-comma (get line 4)
-            prev-velocity (get line 10)
-            prev-offset offset)))
-  ;; The last note has no length info, so we add it separately as 0.5
-  (.append notes (make-note (int prev-comma) (int prev-velocity) 0.5))
-  notes)
+    (setv lines (list (doto (csv.reader tsv :delimiter "\t") next))))
+  ;; HACK: Ignores the last line of the file, which has no duration.
+  (lfor (, line0 line1) (zip lines (rest lines))
+        :if (and (in (get line0 1) useful-notes) ; Only take note lines
+                 (in (get line1 1) useful-notes))
+        (make-note (int (get line0 4))       ; Holdrian comma
+                   (int (get line0 10))      ; Velocity
+                   (- (float (get line1 12)) ; Duration
+                      (float (get line0 12))))))
 
 (defn read-song [path]
   (setv filename (. (Path path) stem))
