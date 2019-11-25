@@ -1,6 +1,5 @@
 (import random)
-(import [const [add1 sub1]]
-        [notes [add-koma]])
+(import [notes [add-koma]])
 
 ;;;; Scales and chords
 
@@ -70,7 +69,7 @@
 ;;; Üçlüler (triplets) are made up of dörtlüler lacking the final interval.
 ;;; Beşliler (quintets) are made up of dörtlüler with a tanini koma appended.
 (defn make-dizi [durak name length]
-  (setv intervals (cut (+ (get dörtlü-forms name) ['tanini]) 0 (sub1 length))
+  (setv intervals (cut (+ (get dörtlü-forms name) ['tanini]) 0 (dec length))
         results []
         previous durak)
   (for [interval intervals]

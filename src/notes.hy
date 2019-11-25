@@ -1,5 +1,5 @@
 (import math)
-(import [const [add1 sub1 invert-dict]])
+(import [const [invert-dict]])
 
 (setv holdrian 22.6415)
 
@@ -139,7 +139,7 @@
 (defn comma->pitch [comma]
   (if (= comma -1)
       0.0
-      (* root (pow 2 (sub1 (/ (* holdrian comma) 1200))))))
+      (* root (pow 2 (dec (/ (* holdrian comma) 1200))))))
 
 (defn perde->pitch [perde]
   (comma->pitch (get perdeler perde)))
