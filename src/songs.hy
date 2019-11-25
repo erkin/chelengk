@@ -28,7 +28,7 @@
 (defn read-notes [path]
   (with [tsv (open path)]
     (setv lines (list (doto (csv.reader tsv :delimiter "\t") next))))
-  ;; HACK: Ignores the last line of the file, which has no duration.
+  ;; HACK: Skips the last line of the file, which has no duration.
   (lfor (, line0 line1) (zip lines (rest lines))
         :if (and (in (get line0 1) useful-notes) ; Only take note lines
                  (in (get line1 1) useful-notes))

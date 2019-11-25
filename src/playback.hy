@@ -25,19 +25,16 @@
 
 (defn make-sine-wave [pitch volume duration
                       &optional [sample-rate default-sample-rate]]
-  (.tobytes
-    (* volume
-       (sin (* 2 pi
-               (arange :dtype float32 (* sample-rate duration))
-               (/ pitch sample-rate))))))
+  (setv frames (arange :dtype float32 (* sample-rate duration)))
+  (.tobytes (* volume (sin (* 2 pi (/ pitch sample-rate) frames)))))
 
 (defn make-silence [duration &optional [sample-rate default-sample-rate]]
-  (.tobytes (* 0 (arange (* sample-rate duration) :dtype float32))))
+  (setv frames (arange :dtype float32 (* sample-rate duration)))
+  (.tobytes (* 0 frames)))
 
 (defn make-tune [song]
-  (setv notes (. song notes)
-        tune [])
-  (for [note notes]
+  (setv tune [])
+  (for [note (. song notes)]
     (setv pitch (comma->pitch note.comma)
           volume (* 0.03 note.velocity)
           ;; TODO: Add tempo
