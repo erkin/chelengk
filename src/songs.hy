@@ -1,7 +1,7 @@
 (import [collections [namedtuple]]
         csv
-        [pathlib [Path]])
-(import [const [song-directory]])
+        [pathlib [Path]]
+        [sys [stderr]])
 
 ;;; SymbTr parser
 
@@ -27,24 +27,34 @@
 
 (defn read-notes [path]
   (with [tsv (open path)]
-    (setv lines (list (doto (csv.reader tsv :delimiter "\t") next))))
-  ;; HACK: Skips the last line of the file, which has no duration.
-  (lfor (, line0 line1) (zip lines (rest lines))
-        :if (and (in (get line0 1) useful-notes) ; Only take note lines
-                 (in (get line1 1) useful-notes))
-        (make-note (int (get line0 4))       ; Holdrian comma
-                   (int (get line0 10))      ; Velocity
-                   (- (float (get line1 12)) ; Duration
-                      (float (get line0 12))))))
+    (try
+      (setv dialect (.sniff (csv.Sniffer) (.read tsv 1024)))
+      ;; Let's make sure this is a real TSV file.
+      (assert (= (. dialect delimiter) "\t"))
+      (setv lines (list (doto (csv.reader tsv :delimiter "\t") next)))
+      ;; Return nil if we determine the file is corrupt.
+      (except [[AssertionError csv.Error]]
+        (print :file stderr "Error: Not a SymbTr file:" path))
+      ;; HACK: Skips the last note of the file, which has no duration.
+      (else
+        (lfor (, line0 line1) (zip lines (rest lines))
+              :if (and (in (get line0 1) useful-notes) ; Only take note lines
+                       (in (get line1 1) useful-notes))
+              (make-note (int (get line0 4))       ; Holdrian comma
+                         (int (get line0 10))      ; Velocity
+                         (- (float (get line1 12)) ; Duration
+                            (float (get line0 12)))))))))
 
 (defn read-song [path]
-  (setv filename (. (Path path) stem))
-  (make-song #* (+ [filename] [(read-notes path)] (.split filename "--"))))
-
-(defn read-song-from-library [filename]
-  (read-song (Path song-directory filename)))
-
-(defn read-all-songs-from-library []
-  (lfor path (.iterdir (Path song-directory))
-        :if (.is_file path)
-        (read-song path)))
+  (setv filename (. (Path path) stem)
+        metadata (.split filename "--")
+        notes (read-notes path))
+  ;; Just return nil if `notes' is nil.
+  (unless (none? notes)
+    (try
+      (assert (= (len metadata) 5))
+      (except [[AssertionError]]
+        (print :file stderr "Warning: Filename invalid:" filename)
+        ;; Dummy metadata
+        (setv metadata (* [" "] 5))))
+    (make-song #* (+ [filename] [notes] metadata))))

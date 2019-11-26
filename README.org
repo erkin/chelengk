@@ -1,9 +1,5 @@
 * Chelengk
-  A work-in-progress project for a symbolic [[https://en.wikipedia.org/wiki/Turkish_makam][makam music]] engine based on
-  Arel-Ezgi-Uzdilek/fifty-three tone equal temperament system. Uses the
+  A work-in-progress project for a symbolic [[https://en.wikipedia.org/wiki/Turkish_makam][makam music]] generation engine based
+  on Arel-Ezgi-Uzdilek/fifty-three tone equal temperament system. Uses the
   [[https://github.com/MTG/SymbTr][SymbTr]] corpus.
-
-** Roadmap
-   + Compound makamlar
-   + Makam developments
-   + Procedural generation of music
+     
