@@ -9,23 +9,8 @@
 (setv holdrian 22.6415)
 (setv root 16.35)
 
-(defn initialise-pyaudio []
-  (pyaudio.PyAudio))
-
-(defn finalise-pyaudio [p]
-  (.terminate p))
-
 (defn initialise-stream [p &optional [sample-rate default-sample-rate]]
-  (.open p
-         :format pyaudio.paFloat32
-         :channels 1
-         :rate sample-rate
-         :output True))
-
-(defn finalise-stream [stream]
-  (.stop_stream stream)
-  (.close stream))
-
+)
 (defn comma->pitch [comma]
   (if (= comma -1)
       0.0
@@ -59,12 +44,18 @@
 (defn audio-thunk [notes]
   (global lock)
   (.acquire lock)
-  (setv p (initialise-pyaudio)
-        stream (initialise-stream p))
-  (.write stream (make-tune notes))
-  (finalise-stream stream)
-  (finalise-pyaudio p)
-  (.release lock))
+  (setv p (pyaudio.PyAudio))
+  (doto (.open
+          p
+          :format pyaudio.paFloat32
+          :channels 1
+          :rate default-sample-rate
+          :output True)
+        (.write (make-tune notes))
+        .stop_stream
+        .close)
+  (.release lock)
+  (.terminate p))
 
 (defn play-tune [notes]
   (global lock)
