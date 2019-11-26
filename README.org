@@ -3,3 +3,4 @@
   on Arel-Ezgi-Uzdilek/fifty-three tone equal temperament system. Uses the
   [[https://github.com/MTG/SymbTr][SymbTr]] corpus.
      
+  Depends on [[http://www.portaudio.com/][PortAudio]].
