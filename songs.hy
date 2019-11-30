@@ -1,3 +1,4 @@
+(import [const [song-directory]])
 (import [collections [namedtuple]]
         csv
         [pathlib [Path]]
@@ -22,8 +23,8 @@
        ;; Embellishment
        "1" "28"])
 
-(setv make-song (namedtuple 'song '(filename notes makam form usul title composer)))
-(setv make-note (namedtuple 'note '(comma velocity duration)))
+(setv make-song (namedtuple 'song '(notes filename makam form usul title composer)))
+(setv make-note (namedtuple 'note '(comma velocity offset duration)))
 
 (defn read-notes [path]
   (with [tsv (open path)]
@@ -34,7 +35,7 @@
       (setv lines (list (doto (csv.reader tsv :delimiter "\t") next)))
       ;; Return nil if we determine the file is corrupt.
       (except [[csv.Error AssertionError StopIteration]]
-        (print :file stderr "Error: Not a SymbTr file:" path))
+        (print :file stderr "Warning: Not loading invalid file:" path))
       ;; HACK: Skips the last note of the file, which has no duration.
       (else
         (lfor (, line0 line1) (zip lines (rest lines))
@@ -42,6 +43,7 @@
                        (in (get line1 1) useful-notes))
               (make-note (int (get line0 4))       ; Holdrian comma
                          (int (get line0 10))      ; Velocity
+                         (float (get line0 12))    ; Offset
                          (- (float (get line1 12)) ; Duration
                             (float (get line0 12)))))))))
 
@@ -57,4 +59,11 @@
         (print :file stderr "Warning: Filename invalid:" filename)
         ;; Dummy metadata
         (setv metadata (* [" "] 5))))
-    (make-song #* (+ [filename] [notes] metadata))))
+    (make-song #* (+ [notes] [filename] metadata))))
+
+(defn read-all-songs-from-library []
+  (lfor path (.iterdir (Path song-directory))
+        :if (.is_file path)
+        :setv song (read-song path)
+        :if (not (none? song))
+        song))

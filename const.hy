@@ -5,3 +5,6 @@
 
 (defn invert-dict [dic]
   (dict (zip (.values dic) (.keys dic))))
+
+(defn init [lst]
+  (cut lst 0 -1))
