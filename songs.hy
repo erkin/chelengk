@@ -33,7 +33,7 @@
       (assert (= (. dialect delimiter) "\t"))
       (setv lines (list (doto (csv.reader tsv :delimiter "\t") next)))
       ;; Return nil if we determine the file is corrupt.
-      (except [[AssertionError csv.Error]]
+      (except [[csv.Error AssertionError StopIteration]]
         (print :file stderr "Error: Not a SymbTr file:" path))
       ;; HACK: Skips the last note of the file, which has no duration.
       (else
