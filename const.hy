@@ -1,7 +1,7 @@
-(import [os.path [dirname]]
-        [collections [__file__ :as this-file]])
+(import [os.path [dirname realpath]]
+        [sys [argv]])
 
-(setv song-directory (+ (dirname this-file) "/SymbTr/txt"))
+(setv song-directory (+ (dirname (realpath (get argv 0))) "/SymbTr/txt"))
 
 (defn invert-dict [dic]
   (dict (zip (.values dic) (.keys dic))))
