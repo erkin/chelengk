@@ -9,8 +9,6 @@
 (setv holdrian 22.6415)
 (setv root 16.35)
 
-(defn initialise-stream [p &optional [sample-rate default-sample-rate]]
-)
 (defn comma->pitch [comma]
   (if (= comma -1)
       0.0
@@ -39,11 +37,7 @@
                    (make-sine-wave pitch volume duration)))))
   (+ #* tune))
 
-(setv lock (Lock))
-
-(defn audio-thunk [notes]
-  (global lock)
-  (.acquire lock)
+(defn play-tune [notes]
   (setv p (pyaudio.PyAudio))
   (doto (.open
           p
@@ -54,10 +48,17 @@
         (.write (make-tune notes))
         .stop_stream
         .close)
-  (.release lock)
   (.terminate p))
 
-(defn play-tune [notes]
+(setv lock (Lock))
+
+(defn audio-thunk [notes]
+  (global lock)
+  (.acquire lock)
+  (play-tune notes)
+  (.release lock))
+
+(defn play-threaded-tune [notes]
   (global lock)
   ;; Just return nil if the lock is taken.
   (unless (.locked lock)

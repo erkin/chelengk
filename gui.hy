@@ -1,6 +1,6 @@
 (require [hy.extra.anaphoric [ap-if]])
 (import [const [song-directory]]
-        [playback [play-tune]]
+        [playback [play-threaded-tune]]
         [songs [read-song]])
 (import [tkinter [*]]
         [tkinter.messagebox [showerror]]
@@ -40,7 +40,7 @@
 
 (defn play-current-selection [listbox]
   (ap-if (get-selection listbox)
-         (play-tune (. it notes))))
+         (play-threaded-tune (. it notes))))
 
 (defn update-song-details [listbox labels]
   (ap-if (get-selection listbox)

@@ -41,11 +41,12 @@
         (lfor (, line0 line1) (zip lines (rest lines))
               :if (and (in (get line0 1) useful-notes) ; Only take note lines
                        (in (get line1 1) useful-notes))
-              (make-note (int (get line0 4))       ; Holdrian comma
-                         (int (get line0 10))      ; Velocity
-                         (float (get line0 12))    ; Offset
-                         (- (float (get line1 12)) ; Duration
-                            (float (get line0 12)))))))))
+              (make-note
+                (int (get line0 4))              ; Holdrian comma
+                (int (get line0 10))             ; Velocity
+                (round (float (get line0 12)) 2) ; Offset
+                (round (- (float (get line1 12)) ; Duration
+                          (float (get line0 12))) 2)))))))
 
 (defn read-song [path]
   (setv filename (. (Path path) stem)
@@ -66,4 +67,11 @@
         :if (.is_file path)
         :setv song (read-song path)
         :if (not (none? song))
+        song))
+
+(defn read-songs [category]
+  (lfor path (.iterdir (Path song-directory))
+        :if (.is_file path)
+        :setv song (read-song path)
+        :if (and (not (none? song)) (= song.form category))
         song))
