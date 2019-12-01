@@ -60,7 +60,7 @@
         (print :file stderr "Warning: Filename invalid:" filename)
         ;; Dummy metadata
         (setv metadata (* [" "] 5))))
-    (make-song #* (+ [notes] [filename] metadata))))
+    (make-song notes filename #*metadata)))
 
 (defn read-all-songs-from-library []
   (lfor path (.iterdir (Path song-directory))
@@ -75,3 +75,9 @@
         :setv song (read-song path)
         :if (and (not (none? song)) (= song.form category))
         song))
+
+(defn make-dummy-song [commas form]
+  (defn make-dummy-note [comma]
+    (make-note comma 100 None 0.1))
+  (make-song (list (map make-dummy-note commas))
+             "" "?" form "?" (str (gensym)) "Keras"))

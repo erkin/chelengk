@@ -10,7 +10,7 @@
 (setv root 16.35)
 
 (defn comma->pitch [comma]
-  (if (= comma -1)
+  (if (= comma -1) ; -1 indicates silence
       0.0
       (* root (pow 2 (dec (/ (* holdrian comma) 1200))))))
 

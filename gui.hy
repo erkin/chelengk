@@ -7,7 +7,7 @@
         [tkinter.filedialog [askopenfilenames]]
         [tkinter.ttk [*]]) ; Let ttk override defaults.
 
-;;;; TkInter GUI
+;;;; TkInter GUI for library management
 
 
 (setv library {})

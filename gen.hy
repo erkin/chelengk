@@ -1,14 +1,13 @@
-(require [macros [nget]])
-(import [songs [read-songs make-note]]
-        [const [init invert-dict here]]
-        [playback [play-tune]])
-(import [time [time sleep]]
-        pickle
-        random)
+(import [songs [read-songs make-dummy-song]]
+        [const [init invert-dict here]])
+(import time pickle)
 (import [numpy :as np]
-        [tensorflow :as tf]
-        [tensorflow.keras :as K]
-        [tensorflow.keras.layers [LSTM Dense Activation Dropout Embedding TimeDistributed]])
+        [tensorflow.keras [Sequential]]
+        [tensorflow.keras.layers
+         [LSTM Dense Activation Dropout Embedding TimeDistributed]])
+
+;;;; Keras LSTM music generation
+
 
 (setv sequence-length 64)
 (setv batch-size 16)
@@ -26,7 +25,6 @@
 (defn read-batch [notes uniques]
   (setv batch (int (/ (get notes.shape 0) batch-size)) ; Batch shape
         batch-count (range 0 (- batch sequence-length) sequence-length))
-  (print "Batch count:" (last batch-count))
   (for [start batch-count] ; Batch
     (setv x (np.zeros (, batch-size sequence-length))
           y (np.zeros (, batch-size sequence-length uniques)))
@@ -39,7 +37,7 @@
     (yield (, x y))))
 
 (defn build-model [uniques &kwonly [mode "training"]]
-  (doto (K.Sequential)
+  (doto (Sequential)
         (.add (Embedding
                 :input_dim uniques
                 :output_dim 512
@@ -67,14 +65,14 @@
         (.add (Activation "softmax"))))
 
 (defn train-network [category]
-  (setv start (time)
+  (setv start (time.time)
         notes (get-notes category)
         indices (dfor (, index note) (enumerate (sorted (set notes)))
                       [note index])
         indexed-notes (np.asarray (lfor note notes (get indices note)) :dtype np.int32)
         uniques (len indices)
-        songs-read (time))
-  (print "Songs read and serialised in" (- songs-read start) "seconds.")
+        songs-read (time.time))
+  (print "Songs read and serialised in" (round (- songs-read start) 3) "seconds.")
 
   (with [f (open (here (.format "output/{}-indices.dat" category)) "wb")]
     (pickle.dump indices f))
@@ -101,17 +99,22 @@
              "/ Accuracy:" (round final-accuracy 3)))
     (.append loss final-loss)
     (.append accuracy final-accuracy)
-    (if [zero? (% (inc epoch) 10)]
-        (.save_weights model (here (.format "output/{}-weights{}.h5" category (inc epoch))))))
-  (print "Network trained in" (- (time) songs-read) "seconds."))
+    (if (zero? (% (inc epoch) 5))
+        (.save_weights
+          model
+          (here (.format "output/{}-weights{}.h5" category (inc epoch))))))
+  (print "Network trained in" (round (- (time.time) songs-read) 3) "seconds."))
 
-(defn generate-stuff [category]
-  (setv indices (with [file (open (here (.format "output/{}-indices.dat" category)) "rb")]
-                  (invert-dict (pickle.load file)))
-        uniques (len indices)
+(defn generate-song [category]
+  (setv indices
+        (with [file (open (here (.format "output/{}-indices.dat" category)) "rb")]
+          (invert-dict (pickle.load file))))
+  (setv uniques (len indices)
+        start (time.time)
         model (doto (build-model uniques :mode "generation")
-                    (.load_weights (here (.format "output/{}-weights{}.h5" category epochs))))
-        sequence-index [(random.choice (list indices))])
+                    (.load_weights
+                      (here (.format "output/{}-weights{}.h5" category epochs))))
+        sequence-index [(np.random.choice (list indices))])
   (for [_ (range sequence-length)]
     (setv batch (np.zeros (, 1 1)))
     (setv (get batch (, 0 0)) (get sequence-index -1))
@@ -120,4 +123,8 @@
                    :size 1
                    :p (.ravel (.predict_on_batch model batch))))
     (.append sequence-index (get sample 0)))
-  (play-tune (map (fn [index] (make-note (get indices index) 100 0.0 0.1)) sequence-index)))
+  (print "Generated a(n)" category "in" (round (- (time.time) start) 3) "seconds.")
+  (make-dummy-song
+    (lfor index sequence-index
+          (get indices index))
+    category))

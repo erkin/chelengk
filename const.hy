@@ -2,6 +2,9 @@
         [sys [argv]]
         [operator [iconcat]])
 
+;;;; Values and procedures of common use
+
+
 (setv current-directory (dirname (realpath (get argv 0))))
 
 (defn here [directory]
