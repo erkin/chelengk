@@ -1,10 +1,10 @@
 (require [hy.extra.anaphoric [ap-if]])
-(import [const [song-directory]]
-        [playback [play-threaded-tune]]
+(import [const [song-directory here]]
+        [playback [play-threaded-tune save-tune]]
         [songs [read-song]])
 (import [tkinter [*]]
         [tkinter.messagebox [showerror]]
-        [tkinter.filedialog [askopenfilenames]]
+        [tkinter.filedialog [askopenfilenames asksaveasfilename]]
         [tkinter.ttk [*]]) ; Let ttk override defaults.
 
 ;;;; TkInter GUI for library management
@@ -26,6 +26,14 @@
     :multiple True
     :filetypes (, (, "SymbTr files" "*.txt"))))
 
+(defn get-saveas-filename [title]
+  (asksaveasfilename
+    :initialdir (here "output")
+    :title "Select path to save"
+    :initialfile title
+    :defaultextension ".wav"
+    :filetypes (, (, "WAVE files" "*.wav"))))
+
 (defn add-file-to-library [song-file listbox]
   (ap-if (read-song song-file)
          (do
@@ -41,6 +49,13 @@
 (defn play-current-selection [listbox]
   (ap-if (get-selection listbox)
          (play-threaded-tune (. it notes))))
+
+(defn save-current-selection [listbox]
+  (setv selection (get-selection listbox))
+  (when selection
+    (setv path (get-saveas-filename (. selection title)))
+    (when path
+      (save-tune (. selection notes) path))))
 
 (defn update-song-details [listbox labels]
   (ap-if (get-selection listbox)
@@ -124,8 +139,18 @@
                 (fn []
                   (setv selected (.curselection listbox))
                   (when selected
-                    (.pop library (.get listbox selected))
-                    (.delete listbox selected))))
+                    (try
+                      (.pop library (.get listbox selected))
+                      (finally
+                        (.delete listbox selected))))))
         (.grid :row 6 :column 2
+               :padx 5 :pady 5))
+  (doto (Button window
+                :text "Export song"
+                :command
+                (fn []
+                  (when (.curselection listbox)
+                    (save-current-selection listbox))))
+        (.grid :row 6 :column 3
                :padx 5 :pady 5))
   (.mainloop window))
