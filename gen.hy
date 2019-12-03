@@ -11,7 +11,6 @@
 
 (setv sequence-length 64)
 (setv batch-size 16)
-(setv epochs 10)
 
 (defn get-notes [category]
   (setv notes [])
@@ -63,8 +62,11 @@
                   (TimeDistributed (Dense uniques))
                   (Dense uniques)))
         (.add (Activation "softmax"))))
-
-(defn train-network [category]
+
+(defn train-network [category &kwonly [retrain False] [initial-epoch 0] [epochs 10]]
+  (print "Training for" category)
+  (when retrain
+    (print "Starting from epoch" (inc initial-epoch)))
   (setv start (time.time)
         notes (get-notes category)
         indices (dfor (, index note) (enumerate (sorted (set notes)))
@@ -82,14 +84,14 @@
                     (.compile :loss "categorical_crossentropy"
                               :optimizer "adam"
                               :metrics ["accuracy"])))
-  (setv epoch-number []
-        loss []
+  (when retrain
+    (.load_weights model (here f"output/{category}-weights{initial-epoch}.h5") :by_name True))
+  (setv loss []
         accuracy [])
-  (for [epoch (range epochs)]
+  (for [epoch (range initial-epoch epochs)]
     (print "Epoch" (inc epoch) "of" epochs)
     (setv final-loss 0
           final-accuracy 0)
-    (.append epoch-number (inc epoch))
     (for [(, i (, x y))
           (enumerate (read-batch indexed-notes uniques))]
       (setv (, final-loss
@@ -99,13 +101,13 @@
              "/ Accuracy:" (round final-accuracy 3)))
     (.append loss final-loss)
     (.append accuracy final-accuracy)
-    (if (zero? (% (inc epoch) 5))
+    (if (zero? (% (inc epoch) 10))
         (.save_weights
           model
           (here (.format "output/{}-weights{}.h5" category (inc epoch))))))
-  (print "Network trained in" (round (- (time.time) songs-read) 3) "seconds."))
+  (print "Network trained for" category "in" (round (- (time.time) songs-read) 3) "seconds."))
 
-(defn generate-song [category]
+(defn generate-song [category &kwonly [epochs 10]]
   (setv indices
         (with [file (open (here (.format "output/{}-indices.dat" category)) "rb")]
           (invert-dict (pickle.load file))))
