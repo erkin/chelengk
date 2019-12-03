@@ -105,7 +105,9 @@
         (.save_weights
           model
           (here (.format "output/{}-weights{}.h5" category (inc epoch))))))
-  (print "Network trained for" category "in" (round (- (time.time) songs-read) 3) "seconds."))
+  (print "Network trained for" category
+         "in" (round (- (time.time) songs-read) 3) "seconds"
+         "with a final accuracy of" final-accuracy))
 
 (defn generate-song [category &kwonly [epochs 10]]
   (setv indices

@@ -1,3 +1,6 @@
 * Chelengk
   A work-in-progress project for symbolic [[https://en.wikipedia.org/wiki/Turkish_makam][makam music]] generation with [[https://en.wikipedia.org/wiki/LSTM][LSTM]].
   Uses the [[https://github.com/MTG/SymbTr][SymbTr]] corpus. Depends on [[https://www.tensorflow.org/][TensorFlow]] and [[http://www.portaudio.com/][PortAudio]].
+
+  See [[file:main.py][ =main.py= ]] for an example of training and generating music.
+  [[file:start_gui.py][ =start_gui.py= ]] launches the music player.
