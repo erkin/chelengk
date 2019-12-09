@@ -27,20 +27,20 @@
   (for [start batch-count] ; Batch
     (setv x (np.zeros (, batch-size sequence-length))
           y (np.zeros (, batch-size sequence-length uniques)))
-    (for [index (range 0 batch-size)]    ; Batch row
-      (for [i (range 0 sequence-length)] ; Batch column
+    (for [index (range batch-size)]    ; Batch row
+      (for [i (range sequence-length)] ; Batch column
         (setv (get x (, index i))
               (get notes (+ start i (* index batch))))
         (setv (get y (, index i (get notes (+ start i 1 (* index batch)))))
               1)))
     (yield (, x y))))
 
-(defn build-model [uniques &kwonly [mode "training"]]
+(defn build-model [uniques &kwonly [training True]]
   (doto (Sequential)
         (.add (Embedding
                 :input_dim uniques
                 :output_dim 512
-                :batch_input_shape (if (= mode "training")
+                :batch_input_shape (if training
                                        (, batch-size sequence-length)
                                        (, 1 1))))
         (.add (LSTM
@@ -55,10 +55,10 @@
         (.add (Dropout 0.2))
         (.add (LSTM
                 256
-                :return_sequences (= mode "training")
+                :return_sequences training
                 :stateful True))
         (.add (Dropout 0.2))
-        (.add (if (= mode "training")
+        (.add (if training
                   (TimeDistributed (Dense uniques))
                   (Dense uniques)))
         (.add (Activation "softmax"))))
@@ -79,7 +79,7 @@
   (with [f (open (here (.format "output/{}-indices.dat" category)) "wb")]
     (pickle.dump indices f))
 
-  (setv model (doto (build-model uniques)
+  (setv model (doto (build-model uniques :training True)
                     (.summary)
                     (.compile :loss "categorical_crossentropy"
                               :optimizer "adam"
@@ -100,7 +100,7 @@
              "/ Loss:" (round final-loss 3)
              "/ Accuracy:" (round final-accuracy 3)))
     (.append loss final-loss)
-    (.append accuracy final-accuracy)
+    (.append accuracy final-accuracy) ;; delet this
     (if (zero? (% (inc epoch) 10))
         (.save_weights
           model
@@ -115,7 +115,7 @@
           (invert-dict (pickle.load file))))
   (setv uniques (len indices)
         start (time.time)
-        model (doto (build-model uniques :mode "generation")
+        model (doto (build-model uniques :training False)
                     (.load_weights
                       (here (.format "output/{}-weights{}.h5" category epochs))))
         sequence-index [(np.random.choice (list indices))])

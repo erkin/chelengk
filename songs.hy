@@ -2,6 +2,7 @@
 (import [collections [namedtuple]]
         csv
         [pathlib [Path]]
+        re
         [sys [stderr]])
 
 ;;; SymbTr parser
@@ -53,7 +54,7 @@
         metadata (.split filename "--")
         notes (read-notes path))
   ;; Just return nil if `notes' is nil.
-  (unless (none? notes)
+  (when notes
     (try
       (assert (= (len metadata) 5))
       (except [[AssertionError]]
@@ -66,18 +67,17 @@
   (lfor path (.iterdir (Path song-directory))
         :if (.is_file path)
         :setv song (read-song path)
-        :if (not (none? song))
+        :if song
         song))
 
 (defn read-songs [category]
   (lfor path (.iterdir (Path song-directory))
-        :if (.is_file path)
+        :if (and
+              ;; Is this a file?
+              (.is_file path)
+              ;; Is the category we're searching for?
+              (re.match (+ "^" category "--") (. stem name)))
         :setv song (read-song path)
-        :if (and (not (none? song)) (= song.form category))
+        ;; Did we parse it successfully?
+        :if song
         song))
-
-(defn make-dummy-song [commas form]
-  (defn make-dummy-note [comma]
-    (make-note comma 100 None 0.1))
-  (make-song (list (map make-dummy-note commas))
-             "" "?" form "?" (str (gensym)) "Keras"))
