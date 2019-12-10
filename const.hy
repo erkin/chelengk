@@ -8,15 +8,16 @@
 (setv current-directory (dirname (realpath (get argv 0))))
 
 (defn here [directory]
+ ;; (+ "/content/" directory)
   (join current-directory directory))
 
-(setv song-directory (join current-directory "SymbTr/txt"))
+(setv song-directory (here "SymbTr/txt"))
 
 (defn invert-dict [dic]
   (dict (zip (.values dic) (.keys dic))))
 
 (defn init [col]
-  (cut (list col) 0 -1))
+  (tuple (cut (list col) 0 -1)))
 
 (defn concat [lists]
   (reduce iconcat lists []))

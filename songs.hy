@@ -76,7 +76,7 @@
               ;; Is this a file?
               (.is_file path)
               ;; Is the category we're searching for?
-              (re.match (+ "^" category "--") (. stem name)))
+              (re.search (+ "--" category "--") (. path stem)))
         :setv song (read-song path)
         ;; Did we parse it successfully?
         :if song
