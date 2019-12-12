@@ -1,7 +1,8 @@
 (require [hy.extra.anaphoric [ap-if]])
 (import [const [song-directory here]]
-        [playback [play-threaded-tune save-tune]]
-        [songs [read-song]])
+        [playback [play-threaded-tune]]
+        [songs [read-song]]
+        [midi [make-and-save-midi]])
 (import [tkinter [*]]
         [tkinter.messagebox [showerror]]
         [tkinter.filedialog [askopenfilenames asksaveasfilename]]
@@ -31,8 +32,8 @@
     :initialdir (here "output")
     :title "Select path to save"
     :initialfile title
-    :defaultextension ".wav"
-    :filetypes (, (, "WAVE files" "*.wav"))))
+    :defaultextension ".mid"
+    :filetypes (, (, "MIDI files" "*.mid"))))
 
 (defn add-file-to-library [song-file listbox]
   (ap-if (read-song song-file)
@@ -55,7 +56,7 @@
   (when selection
     (setv path (get-saveas-filename (. selection title)))
     (when path
-      (save-tune (. selection notes) path))))
+      (make-and-save-midi (. selection notes) path))))
 
 (defn update-song-details [listbox labels]
   (ap-if (get-selection listbox)

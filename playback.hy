@@ -37,7 +37,7 @@
                (if (zero? pitch)
                    (make-silence duration)
                    (make-sine-wave pitch volume duration)))))
-  (+ #* tune))
+  (+ #*tune))
 
 (defn play-tune [notes]
   (setv p (pyaudio.PyAudio))

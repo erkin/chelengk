@@ -1,11 +1,11 @@
-(import [songs [read-songs]]
+(import [songs [read-songs make-dummy-song]]
         [const [init concat invert-dict here]]
         [midi [make-midi]])
 (import dill
         [numpy :as np]
         [tensorflow.keras [Sequential]]
         [tensorflow.keras.layers
-         [LSTM Dense Activation Dropout BatchNormalization]]
+         [LSTM Dense Embedding Dropout BatchNormalization]]
         [tensorflow.keras.callbacks [ModelCheckpoint]]
         [tensorflow.keras.utils [to_categorical]])
 
@@ -20,34 +20,34 @@
   (for [song (read-songs category)]
     ;; Drop the duration field and convert to an array.
     (.extend notes (map init (. song notes))))
-   notes)
+  notes)
 
 (defn build-model [network-in uniques &kwonly [training True]]
   (doto (Sequential)
+        (.add (Embedding
+                :input_dim uniques
+                :output_dim 512
+                :batch_input_shape (, batch-size sequence-length)))
         (.add (LSTM
                 256
-                :input_shape (if training
-                                 (, batch-size sequence-length)
-                                 (, 1 1))
-                :recurrent_dropout 0.2
-                :return_sequences True))
+                :return_sequences True
+                :stateful True))
+        (.add (Dropout 0.2))
         (.add (LSTM
-                256
-                :recurrent_dropout 0.2
-                :return_sequences True))
-        (.add (LSTM
-                256
-                :recurrent_dropout 0.2))
+                128
+                :return_sequences True
+                :stateful True))
+        ;; (.add (BatchNormalization))
+        ;; (.add (Dropout 0.2))
+        ;; (.add (Dense
+        ;;         256
+        ;;         :activation "relu"))
         (.add (BatchNormalization))
         (.add (Dropout 0.2))
-        (.add (Dense
-                256
-                :activation "relu"))
-        (.add (BatchNormalization))
-        (.add (Dropout 0.2))
-        (.add (Dense
-                uniques
-                :activation "softmax"))
+        (.add (TimeDistributed
+               (Dense
+                 uniques
+                 :activation "softmax")))
         (.summary)
         (.compile :loss "categorical_crossentropy"
                   :optimizer "adam"
@@ -80,13 +80,18 @@
 
 (defn train-network [category &kwonly [retrain False] [initial-epoch 0] [epochs 10]]
   (print "Training for" category)
-  (when retrain
-    (print "Starting from epoch" (inc initial-epoch)))
-  (setv notes (get-notes category)
-        uniques (len (set notes)))
-  
-  (with [f (open (here f"output/{category}-notes.dat") "wb")]
-    (dill.dump notes f))
+  (if retrain
+      (do
+        (print "Starting from epoch" (inc initial-epoch))
+        (with [f (open (here f"output/{category}-notes.dat") "rb")]
+          (setv notes (dill.load f))))
+      (do
+        (setv notes (get-notes category))
+        (with [f (open (here f"output/{category}-notes.dat") "wb")]
+          (dill.dump notes f))))
+
+  (setv uniques (len (set notes)))
+  (print "Unique notes:" uniques)
 
   (setv (, network-in network-out) (prepare-sequences notes uniques))
 
@@ -117,4 +122,4 @@
   (setv model (doto (build-model network-in uniques :training False)
                     (.load_weights (here f"output/{category}-weights{epochs}.h5"))))
 
-  (make-midi (predict-notes model network-in (sorted (set notes)) uniques)))
+  (make-dummy-song (predict-notes model network-in (sorted (set notes)) uniques)))

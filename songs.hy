@@ -81,3 +81,6 @@
         ;; Did we parse it successfully?
         :if song
         song))
+
+(defn make-dummy-song [notes]
+  (make-song notes #*(* fnord 6)))
