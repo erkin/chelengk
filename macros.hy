@@ -13,3 +13,6 @@
 
 (defmacro nget [ar &rest keys]
   `(get ~ar (, ~@(map parse-indexing keys))))
+
+(deftag s [code]
+  `(nget ~@code))

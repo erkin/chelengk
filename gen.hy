@@ -1,11 +1,13 @@
+(require [macros [nget s]])
 (import [songs [read-songs make-dummy-song]]
         [const [init concat invert-dict here]]
         [midi [make-midi]])
-(import dill
-        [numpy :as np]
-        [tensorflow.keras [Sequential]]
+(import pickle
+        [sklearn.preprocessing [LabelEncoder]]
+        [numpy :as np])
+(import [tensorflow.keras [Sequential]]
         [tensorflow.keras.layers
-         [LSTM Dense Embedding Dropout BatchNormalization]]
+         [LSTM Dense Embedding Dropout BatchNormalization TimeDistributed]]
         [tensorflow.keras.callbacks [ModelCheckpoint]]
         [tensorflow.keras.utils [to_categorical]])
 
@@ -14,24 +16,23 @@
 
 (setv sequence-length 64)
 (setv batch-size 16)
+(setv encoder (LabelEncoder))
+
+(defn encode [arr]
+  (np.apply_along_axis (fn [col] (.fit_transform encoder col)) 0 arr))
+(defn decode [arr]
+  (np.apply_along_axis (fn [col] (.inverse_tranform encoder col)) 0 arr))
 
 (defn get-notes [category]
-  (setv notes [])
-  (for [song (read-songs category)]
-    ;; Drop the duration field and convert to an array.
-    (.extend notes (map init (. song notes))))
-  notes)
+  (concat (read-songs category :notes-only True)))
 
-(defn build-model [network-in uniques &kwonly [training True]]
+(defn build-model [network-in]
   (doto (Sequential)
-        (.add (Embedding
-                :input_dim uniques
-                :output_dim 512
-                :batch_input_shape (, batch-size sequence-length)))
         (.add (LSTM
-                256
-                :return_sequences True
-                :stateful True))
+                32
+                :input_shape  (, (. network-in shape [1])
+                                 (. network-in shape [2]))
+                :return_sequences True))
         (.add (Dropout 0.2))
         (.add (LSTM
                 128
@@ -45,11 +46,11 @@
         (.add (BatchNormalization))
         (.add (Dropout 0.2))
         (.add (TimeDistributed
-               (Dense
-                 uniques
-                 :activation "softmax")))
+                (Dense
+                  1
+                  :activation "softmax")))
         (.summary)
-        (.compile :loss "categorical_crossentropy"
+        (.compile :loss "mae"
                   :optimizer "adam"
                   :metrics ["accuracy"])))
 
@@ -71,11 +72,11 @@
   (setv indices (dict (enumerate note-names))
         pattern (get network-in (np.random.randint 0 (dec (len network-in))))
         result [])
-  (for [i (range 500)]
-    (setv index (np.argmax (.predict model (/ (np.reshape pattern (, 1 (len pattern) 1)) (float uniques)))))
-    (.append result (get indices index))
-    (setv pattern (np.append pattern index)
-          pattern (cut pattern 1 (len pattern))))
+  (for [_ (range length)]
+    (print (.predict model (np.reshape pattern (, (len pattern) 1 1))))
+    ;; (setv pattern (np.append pattern index)
+    ;;       pattern (cut pattern 1 (len pattern)))
+    )
   result)
 
 (defn train-network [category &kwonly [retrain False] [initial-epoch 0] [epochs 10]]
@@ -84,42 +85,36 @@
       (do
         (print "Starting from epoch" (inc initial-epoch))
         (with [f (open (here f"output/{category}-notes.dat") "rb")]
-          (setv notes (dill.load f))))
+          (setv notes (pickle.load f))))
       (do
         (setv notes (get-notes category))
         (with [f (open (here f"output/{category}-notes.dat") "wb")]
-          (dill.dump notes f))))
+          (pickle.dump notes f))))
 
-  (setv uniques (len (set notes)))
-  (print "Unique notes:" uniques)
-
-  (setv (, network-in network-out) (prepare-sequences notes uniques))
-
-  (setv model (build-model network-in uniques))
+  ;; (setv indices (encode notes)
+  ;;       (, network-in network-out) (prepare-sequences indices)
+  ;;       model (build-model network-in))
 
   (when retrain
-    (.load_weights model (here f"output/{category}-weights{initial-epoch}.h5") :by_name True))
+    (.load_weights model (here (.format "output/{}-weights{:02d}.h5" category initial-epoch)) :by_name True))
 
   (.fit model
         network-in
         network-out
         :epochs epochs
-        :batch_size batch-size
+;;        :batch_size batch-size
         :callbacks
         [(ModelCheckpoint
            (+ (here f"output/{category}-weights") "{epoch:02d}.h5")
            :monitor "loss"
-           :save_best_only True
            :mode "min")]))
 
 (defn generate-song [category &kwonly [epochs 10]]
   (setv notes (with [file (open (here f"output/{category}-notes.dat") "rb")]
-                (dill.load file))
-        uniques (len (set notes)))
-
-  (setv (, network-in _) (prepare-sequences notes uniques))
-
-  (setv model (doto (build-model network-in uniques :training False)
-                    (.load_weights (here f"output/{category}-weights{epochs}.h5"))))
+                (pickle.load file)))
+  (setv indices (encode notes)
+        (, network-in _) (prepare-sequences indices)
+        model (doto (build-model network-in)
+                    (.load_weights (here (.format "output/{}-weights{:02d}.h5" category epochs)))) )
 
   (make-dummy-song (predict-notes model network-in (sorted (set notes)) uniques)))

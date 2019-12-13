@@ -143,7 +143,11 @@
                     (try
                       (.pop library (.get listbox selected))
                       (finally
-                        (.delete listbox selected))))))
+                        (.delete listbox selected)
+                        (for [label [makam-label form-label
+                                     usul-label title-label
+                                     composer-label]]
+                          (.configure label :text "")))))))
         (.grid :row 6 :column 2
                :padx 5 :pady 5))
   (doto (Button window

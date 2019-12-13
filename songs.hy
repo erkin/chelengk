@@ -27,7 +27,7 @@
 (setv make-song (namedtuple 'song '(notes filename makam form usul title composer)))
 (setv make-note (namedtuple 'note '(comma velocity offset duration)))
 
-(defn read-notes [path]
+(defn read-notes [path &kwonly [normalise False]]
   (with [tsv (open path)]
     (try
       (setv dialect (.sniff (csv.Sniffer) (.read tsv 1024)))
@@ -42,7 +42,7 @@
         (lfor (, line0 line1) (zip lines (rest lines))
               :if (and (in (get line0 1) useful-notes) ; Only take note lines
                        (in (get line1 1) useful-notes))
-              (make-note
+              ((if normalise (fn [&rest vals] (cut (list vals) 0 -1)) make-note)
                 (int (get line0 4))              ; Holdrian comma
                 (int (get line0 10))             ; Velocity
                 (round (float (get line0 12)) 2) ; Offset
@@ -70,14 +70,16 @@
         :if song
         song))
 
-(defn read-songs [category]
+(defn read-songs [category &kwonly [notes-only False]]
   (lfor path (.iterdir (Path song-directory))
         :if (and
               ;; Is this a file?
               (.is_file path)
               ;; Is the category we're searching for?
               (re.search (+ "--" category "--") (. path stem)))
-        :setv song (read-song path)
+        :setv song (if notes-only
+                       (read-notes path :normalise True)
+                       (read-song path))
         ;; Did we parse it successfully?
         :if song
         song))

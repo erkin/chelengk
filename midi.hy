@@ -15,10 +15,9 @@
   (+ (* (inc octave) 12) pitch))
 
 (defn midi-bend [shift]
-  (try
-    (round (/ 8192 shift))
-    (except [[ZeroDivisionError]]
-      0)))
+  (if (zero? shift)
+      0
+      (round (* 8192 (/ shift 100)))))
 
 (defn make-midi [notes]
   (setv midi (doto (MIDIFile 1)
