@@ -1,6 +1,6 @@
+(require [macros [defattrs]])
 (import [const [song-directory]])
-(import [collections [namedtuple]]
-        csv
+(import csv
         [pathlib [Path]]
         re
         [sys [stderr]])
@@ -24,10 +24,26 @@
        ;; Embellishment
        "1" "28"])
 
-(setv make-song (namedtuple 'song '(notes filename makam form usul title composer)))
-(setv make-note (namedtuple 'note '(comma velocity offset duration)))
+(defattrs Note [object] []
+  [[comma :converter int]
+   [velocity :converter int]
+   [duration :converter (fn [val] (round val 2))]]
+  (defn get-values [self]
+    (, self.comma
+       self.duration)))
 
-(defn read-notes [path &kwonly [normalise False]]
+(defattrs Song [object] []
+  [notes filename makam form usul title composer]
+  (defn get-notes [self]
+    (lfor note (. self notes) (.get-values note)))
+  (defn get-metadata [self]
+    (, self.makam
+       self.form
+       self.usul
+       self.title
+       self.composer)))
+
+(defn read-notes [path]
   (with [tsv (open path)]
     (try
       (setv dialect (.sniff (csv.Sniffer) (.read tsv 1024)))
@@ -42,12 +58,11 @@
         (lfor (, line0 line1) (zip lines (rest lines))
               :if (and (in (get line0 1) useful-notes) ; Only take note lines
                        (in (get line1 1) useful-notes))
-              ((if normalise (fn [&rest vals] (cut (list vals) 0 -1)) make-note)
-                (int (get line0 4))              ; Holdrian comma
-                (int (get line0 10))             ; Velocity
-                (round (float (get line0 12)) 2) ; Offset
-                (round (- (float (get line1 12)) ; Duration
-                          (float (get line0 12))) 2)))))))
+              (Note
+                (get line0 4)             ; Holdrian comma
+                (get line0 10)            ; Velocity
+                (- (float (get line1 12)) ; Duration
+                   (float (get line0 12)))))))))
 
 (defn read-song [path]
   (setv filename (. (Path path) stem)
@@ -60,8 +75,8 @@
       (except [[AssertionError]]
         (print :file stderr "Warning: Filename invalid:" filename)
         ;; Dummy metadata
-        (setv metadata (* [" "] 5))))
-    (make-song notes filename #*metadata)))
+        (setv metadata (* ["fnord"] 5))))
+    (Song notes filename #*metadata)))
 
 (defn read-all-songs-from-library []
   (lfor path (.iterdir (Path song-directory))
@@ -70,19 +85,15 @@
         :if song
         song))
 
-(defn read-songs [category &kwonly [notes-only False]]
+(defn read-songs [category]
   (lfor path (.iterdir (Path song-directory))
         :if (and
               ;; Is this a file?
               (.is_file path)
               ;; Is the category we're searching for?
               (re.search (+ "--" category "--") (. path stem)))
-        :setv song (if notes-only
-                       (read-notes path :normalise True)
-                       (read-song path))
+        :setv song (read-song path)
         ;; Did we parse it successfully?
         :if song
         song))
 
-(defn make-dummy-song [notes]
-  (make-song notes #*(* fnord 6)))

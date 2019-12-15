@@ -62,7 +62,7 @@
   (ap-if (get-selection listbox)
          (for [(, label info)
                ;; We don't need the first two fields (filename and notes).
-               (zip labels (cut it 2))]
+               (zip labels (.get-metadata it))]
            (.configure label
                        ;; Make it a bit more readable.
                        :text (.title (.replace info "_" " "))))))
