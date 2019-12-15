@@ -11,10 +11,13 @@
  ;; (+ "/content/" directory)
   (join current-directory directory))
 
-(setv song-directory (here "SymbTr/txt"))
+(setv song-directory (here "SymbTr/txt")
+      output-directory (here "output"))
 
 (defn invert-dict [dic]
-  (dict (zip (.values dic) (.keys dic))))
+  (dfor (, k v) dic [v k])
+  ;; (dict (zip (.values dic) (.keys dic)))
+  )
 
 (defn init [col]
   (tuple (cut (list col) 0 -1)))

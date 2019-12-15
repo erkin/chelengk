@@ -29,9 +29,9 @@
   (setv tune [])
   (for [note notes]
     (setv pitch (comma->pitch note.comma)
-          volume (* 0.03 note.velocity)
+          volume (* 0.09 note.velocity)
           ;; TODO: Add tempo
-          duration (* 5 note.duration))
+          duration (* 3 note.duration))
     (unless (zero? duration)
       (.append tune
                (if (zero? pitch)

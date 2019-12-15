@@ -1,4 +1,5 @@
 (import [playback [holdrian]])
+(import [random [choice]])
 (import [midiutil [MIDIFile]])
 
 (setv tempo 25)
@@ -15,24 +16,26 @@
   (+ (* (inc octave) 12) pitch))
 
 (defn midi-bend [shift]
-  (if (zero? shift)
-      0
-      (round (* 8192 (/ shift 100)))))
+  (round (* 8192 (/ shift 100))))
 
 (defn make-midi [notes]
   (setv midi (doto (MIDIFile 1)
                    (.addTempo 0 0 tempo)
-                   (.addProgramChange 0 0 0 106))
-        bend 0)
+                   (.addProgramChange 0 0 0 (choice [7 8 25 26
+                                                     36 46 47
+                                                     74 78 105
+                                                     106 107 108])))
+        bend 0
+        offset 0.0)
   (for [note notes]
     (setv (, octave pitch shift) (westernise note.comma))
-    (assert (< (midi-note octave pitch) 128))
 
-    (.addPitchWheelEvent midi 0 0 note.offset (- bend))
-    (.addNote midi 0 0 (midi-note octave pitch) note.offset note.duration note.velocity)
-    (.addPitchWheelEvent midi 0 0 note.offset (midi-bend shift))
+    (.addPitchWheelEvent midi 0 0 offset (- bend))
+    (.addNote midi 0 0 (midi-note octave pitch) offset note.duration note.velocity)
+    (.addPitchWheelEvent midi 0 0 offset (midi-bend shift))
 
-    (setv bend shift))
+    (setv bend shift
+          offset (+ offset note.duration)))
   midi)
 
 (defn save-midi [midi path]

@@ -1,120 +1,146 @@
-(require [macros [nget s]])
-(import [songs [read-songs make-dummy-song]]
-        [const [init concat invert-dict here]]
-        [midi [make-midi]])
-(import pickle
-        [sklearn.preprocessing [LabelEncoder]]
-        [numpy :as np])
+(require [macros [S]]
+         [hy.extra.anaphoric [ap-if]])
+(import [const [concat invert-dict output-directory here]]
+        [songs [Note Song read-songs]])
+(import [glob [glob]]
+        [os [path makedirs]]
+        [numpy :as np]
+        pickle)
 (import [tensorflow.keras [Sequential]]
         [tensorflow.keras.layers
-         [LSTM Dense Embedding Dropout BatchNormalization TimeDistributed]]
+         [LSTM Dense Dropout Activation BatchNormalization]]
         [tensorflow.keras.callbacks [ModelCheckpoint]]
         [tensorflow.keras.utils [to_categorical]])
 
-;;;; Keras LSTM music generation
+(setv batch-size 64
+      sequence-length 100)
 
-
-(setv sequence-length 64)
-(setv batch-size 16)
-(setv encoder (LabelEncoder))
-
-(defn encode [arr]
-  (np.apply_along_axis (fn [col] (.fit_transform encoder col)) 0 arr))
-(defn decode [arr]
-  (np.apply_along_axis (fn [col] (.inverse_tranform encoder col)) 0 arr))
-
-(defn get-notes [category]
-  (concat (read-songs category :notes-only True)))
-
-(defn build-model [network-in]
+(defn build-model [network-in vocabulary-size]
   (doto (Sequential)
         (.add (LSTM
-                32
-                :input_shape  (, (. network-in shape [1])
-                                 (. network-in shape [2]))
+                256
+                :input_shape (, (. network-in shape [1])
+                                (. network-in shape [2]))
                 :return_sequences True))
-        (.add (Dropout 0.2))
         (.add (LSTM
-                128
-                :return_sequences True
-                :stateful True))
-        ;; (.add (BatchNormalization))
-        ;; (.add (Dropout 0.2))
-        ;; (.add (Dense
-        ;;         256
-        ;;         :activation "relu"))
+                256
+                :return_sequences True))
+        (.add (LSTM 256))
         (.add (BatchNormalization))
-        (.add (Dropout 0.2))
-        (.add (TimeDistributed
-                (Dense
-                  1
-                  :activation "softmax")))
+        (.add (Dropout 0.3))
+        (.add (Dense 128))
+        (.add (Activation "relu"))
+        (.add (BatchNormalization))
+        (.add (Dropout 0.3))
+        (.add (Dense vocabulary-size))
+        (.add (Activation "softmax"))
         (.summary)
-        (.compile :loss "mae"
-                  :optimizer "adam"
-                  :metrics ["accuracy"])))
+        (.compile
+          :loss "categorical_crossentropy"
+          :optimizer "adam"
+          :metrics ["accuracy"])))
 
-(defn prepare-sequences [notes uniques]
+(defn read-notes [genre]
+  (setv result [])
+  (for [song (read-songs genre)]
+    (.extend result (.get-notes song)))
+  result)
+
+(defn prepare-sequences [notes &kwonly [generating False]]
   (setv note-names (sorted (set notes))
-        indices (dfor (, index note) (enumerate note-names) [note index]))
+        note-to-index (invert-dict (enumerate note-names))
+        vocabulary-size (len (set notes)))
 
-  (setv network-in [] network-out [])
-  (for [i (range (- (len notes) sequence-length 1))]
+  (setv network-in []
+        network-out [])
+
+  (for [i (range (- (len notes) sequence-length))]
     (setv sequence-in (cut notes i (+ i sequence-length))
           sequence-out (get notes (+ i sequence-length)))
-    (.append network-in (lfor val sequence-in (get indices val)))
-    (.append network-out (get indices sequence-out)))
+    (.append network-in (lfor note sequence-in (get note-to-index note)))
+    (.append network-out (get note-to-index sequence-out)))
 
-  (, (/ (np.reshape network-in (, (len network-in) sequence-length 1)) (float uniques))
-     (to_categorical network-out)))
+  (setv normal-in (/ (np.reshape network-in (, (len network-in) sequence-length 1)) (float vocabulary-size))
+        network-out (to_categorical network-out))
+  (if generating
+      (, network-in normal-in)
+      (, normal-in network-out)))
 
-(defn predict-notes [model network-in note-names uniques]
-  (setv indices (dict (enumerate note-names))
-        pattern (get network-in (np.random.randint 0 (dec (len network-in))))
-        result [])
-  (for [_ (range length)]
-    (print (.predict model (np.reshape pattern (, (len pattern) 1 1))))
-    ;; (setv pattern (np.append pattern index)
-    ;;       pattern (cut pattern 1 (len pattern)))
-    )
-  result)
-
-(defn train-network [category &kwonly [retrain False] [initial-epoch 0] [epochs 10]]
-  (print "Training for" category)
+(defn train-network [genre epochs &kwonly [retrain False]]
   (if retrain
       (do
-        (print "Starting from epoch" (inc initial-epoch))
-        (with [f (open (here f"output/{category}-notes.dat") "rb")]
-          (setv notes (pickle.load f))))
+        (print f"Retraining for {genre}...")
+        (with [f (open (path.join output-directory f"{genre}-notes.dat") "rb")]
+          (setv notes (pickle.load f)))
+        (ap-if (list (glob (path.join output-directory f"{genre}-weights.*.hd5")))
+               (do
+                 (setv resume-epoch (max (lfor f it (int (get (.split (path.basename f) ".") 1)))))
+                 (print f"Resuming from epoch {resume-epoch}/{epochs}."))
+               (raise (ValueError "No checkpoints to resume from."))))
       (do
-        (setv notes (get-notes category))
-        (with [f (open (here f"output/{category}-notes.dat") "wb")]
+        (print f"Training for {genre}...")
+        (setv resume-epoch 0
+              notes (read-notes genre))
+        (unless (path.exists output-directory)
+          (makedirs output-directory))
+        (with [f (open (path.join output-directory f"{genre}-notes.dat") "wb")]
           (pickle.dump notes f))))
 
-  ;; (setv indices (encode notes)
-  ;;       (, network-in network-out) (prepare-sequences indices)
-  ;;       model (build-model network-in))
+  (setv vocabulary-size (len (set notes))
+        (, network-in network-out) (prepare-sequences notes :generating False)
+        model (build-model network-in vocabulary-size))
 
   (when retrain
-    (.load_weights model (here (.format "output/{}-weights{:02d}.h5" category initial-epoch)) :by_name True))
+    (.load_weights model (path.join output-directory f"{genre}-weights.{resume-epoch}.hd5")))
+
+  (print "Input shape:" (. network-in shape))
+  (print "Output shape:" (. network-out shape))
 
   (.fit model
         network-in
         network-out
         :epochs epochs
-;;        :batch_size batch-size
+        :batch_size batch-size
         :callbacks
         [(ModelCheckpoint
-           (+ (here f"output/{category}-weights") "{epoch:02d}.h5")
+           (+ (here f"output/{genre}-weights.") "{epoch}.hd5")
            :monitor "loss"
            :mode "min")]))
 
-(defn generate-song [category &kwonly [epochs 10]]
-  (setv notes (with [file (open (here f"output/{category}-notes.dat") "rb")]
-                (pickle.load file)))
-  (setv indices (encode notes)
-        (, network-in _) (prepare-sequences indices)
-        model (doto (build-model network-in)
-                    (.load_weights (here (.format "output/{}-weights{:02d}.h5" category epochs)))) )
+(defn generate-song [genre]
+  (print f"Generating {genre}...")
+  (with [f (open (path.join output-directory f"{genre}-notes.dat") "rb")]
+    (setv notes (pickle.load f)))
 
-  (make-dummy-song (predict-notes model network-in (sorted (set notes)) uniques)))
+  (ap-if (glob (path.join output-directory f"{genre}-weights.*.hd5"))
+         (do
+           (setv latest-epoch (max (lfor f it (int (get (.split (path.basename f) ".") 1)))))
+           (print f"Using weights from epoch {latest-epoch}."))
+         (raise (ValueError "No epoch checkpoints found to generate from.")))
+
+  (setv note-names (sorted (set notes))
+        vocabulary-size (len (set notes))
+        (, network-in normal-in) (prepare-sequences notes :generating True)
+        model (doto (build-model normal-in vocabulary-size)
+                    (.load_weights (path.join output-directory f"{genre}-weights.{latest-epoch}.hd5"))))
+
+  (Song (predict-notes model network-in note-names vocabulary-size)
+        #*(* ["fnord"] 6)))
+
+(defn predict-notes [model network-in note-names vocabulary-size]
+  (setv index-to-note (dict (enumerate note-names))
+        predict-out [])
+  (for [_ (range 15)]
+    (setv start (np.random.randint (dec (len network-in)))
+          pattern (get network-in start))
+    (for [_ (range 20)]
+      (setv predict-in (/ (np.reshape pattern (, 1 (len pattern) 1))
+                          (float vocabulary-size))
+            index (np.argmax (.predict model predict-in))
+            result (get index-to-note index))
+      (.append predict-out (Note (get result 0)
+                                 100
+                                 (get result 1)))
+      (.append pattern index)
+      (setv pattern (cut pattern 1 (len pattern)))))
+  predict-out)
