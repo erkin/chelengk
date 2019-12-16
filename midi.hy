@@ -1,5 +1,4 @@
 (import [playback [holdrian]])
-(import [random [choice]])
 (import [midiutil [MIDIFile]])
 
 (setv tempo 25)
@@ -21,10 +20,7 @@
 (defn make-midi [notes]
   (setv midi (doto (MIDIFile 1)
                    (.addTempo 0 0 tempo)
-                   (.addProgramChange 0 0 0 (choice [7 8 25 26
-                                                     36 46 47
-                                                     74 78 105
-                                                     106 107 108])))
+                   (.addProgramChange 0 0 0 104))
         bend 0
         offset 0.0)
   (for [note notes]

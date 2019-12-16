@@ -5,15 +5,17 @@
 (import [glob [glob]]
         [os [path makedirs]]
         [numpy :as np]
-        pickle)
+        pickle
+        [random [randint]])
 (import [tensorflow.keras [Sequential]]
         [tensorflow.keras.layers
          [LSTM Dense Dropout Activation BatchNormalization]]
         [tensorflow.keras.callbacks [ModelCheckpoint]]
+        [tensorflow.keras.optimizers [Adam]]
         [tensorflow.keras.utils [to_categorical]])
 
 (setv batch-size 64
-      sequence-length 100)
+      sequence-length 2)
 
 (defn build-model [network-in vocabulary-size]
   (doto (Sequential)
@@ -22,22 +24,22 @@
                 :input_shape (, (. network-in shape [1])
                                 (. network-in shape [2]))
                 :return_sequences True))
-        (.add (LSTM
-                256
-                :return_sequences True))
+        ;; (.add (LSTM
+        ;;         256
+        ;;         :return_sequences True))
         (.add (LSTM 256))
-        (.add (BatchNormalization))
-        (.add (Dropout 0.3))
-        (.add (Dense 128))
+        ;; (.add (BatchNormalization))
+        ;; (.add (Dropout 0.3))
+        ;; (.add (Dense 128))
         (.add (Activation "relu"))
-        (.add (BatchNormalization))
+        ;; (.add (BatchNormalization))
         (.add (Dropout 0.3))
         (.add (Dense vocabulary-size))
         (.add (Activation "softmax"))
         (.summary)
         (.compile
           :loss "categorical_crossentropy"
-          :optimizer "adam"
+          :optimizer (Adam)
           :metrics ["accuracy"])))
 
 (defn read-notes [genre]
@@ -90,6 +92,8 @@
         (, network-in network-out) (prepare-sequences notes :generating False)
         model (build-model network-in vocabulary-size))
 
+  (print vocabulary-size "unique notes out of" (len notes))
+
   (when retrain
     (.load_weights model (path.join output-directory f"{genre}-weights.{resume-epoch}.hd5")))
 
@@ -138,9 +142,9 @@
                           (float vocabulary-size))
             index (np.argmax (.predict model predict-in))
             result (get index-to-note index))
-      (.append predict-out (Note (get result 0)
+      (.append predict-out (Note result ;; (get result 0)
                                  100
-                                 (get result 1)))
+                                 (* 0.1 (randint 1 5))))
       (.append pattern index)
       (setv pattern (cut pattern 1 (len pattern)))))
   predict-out)

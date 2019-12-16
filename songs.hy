@@ -29,8 +29,7 @@
    [velocity :converter int]
    [duration :converter (fn [val] (round val 2))]]
   (defn get-values [self]
-    (, self.comma
-       self.duration)))
+    self.comma))
 
 (defattrs Song [object] []
   [notes filename makam form usul title composer]
