@@ -39,7 +39,7 @@
         (.summary)
         (.compile
           :loss "categorical_crossentropy"
-          :optimizer (Adam)
+          :optimizer (Adam :lr 0.001)
           :metrics ["accuracy"])))
 
 (defn read-notes [genre]
