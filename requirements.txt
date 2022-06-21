@@ -1,5 +1,5 @@
 hy==0.17.0
-numpy==1.17.4
+numpy==1.22.0
 PyAudio==0.2.11
 tensorflow==2.1.0
 MIDIUtil==1.2.1
